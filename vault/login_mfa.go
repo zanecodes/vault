@@ -1195,6 +1195,7 @@ func parseDuoConfig(mConfig *mfa.Config, d *framework.FieldData) error {
 		APIHostname:    apiHostname,
 		PushInfo:       d.Get("push_info").(string),
 		UsePasscode:    d.Get("use_passcode").(bool),
+		Insecure:       d.Get("insecure").(bool),
 	}
 
 	mConfig.Config = &mfa.Config_DuoConfig{
@@ -1444,6 +1445,7 @@ func (b *MFABackend) mfaConfigToMap(mConfig *mfa.Config) (map[string]interface{}
 		respData["mount_accessor"] = mConfig.MountAccessor
 		respData["username_format"] = mConfig.UsernameFormat
 		respData["use_passcode"] = duoConfig.UsePasscode
+		respData["insecure"] = duoConfig.Insecure
 	case *mfa.Config_PingIDConfig:
 		pingConfig := mConfig.GetPingIDConfig()
 		respData["use_signature"] = pingConfig.UseSignature
@@ -1861,12 +1863,24 @@ func (c *Core) validateDuo(ctx context.Context, mfaFactors *MFAFactor, mConfig *
 		passcode = mfaFactors.passcode
 	}
 
-	client := duoapi.NewDuoApi(
-		duoConfig.IntegrationKey,
-		duoConfig.SecretKey,
-		duoConfig.APIHostname,
-		duoConfig.PushInfo,
-	)
+	var client *duoapi.DuoApi
+
+	if duoConfig.Insecure {
+		client = duoapi.NewDuoApi(
+			duoConfig.IntegrationKey,
+			duoConfig.SecretKey,
+			duoConfig.APIHostname,
+			duoConfig.PushInfo,
+			duoapi.SetInsecure(),
+		)
+	} else {
+		client = duoapi.NewDuoApi(
+			duoConfig.IntegrationKey,
+			duoConfig.SecretKey,
+			duoConfig.APIHostname,
+			duoConfig.PushInfo,
+		)
+	}
 
 	authClient := authapi.NewAuthApi(*client)
 	check, err := authClient.Check()

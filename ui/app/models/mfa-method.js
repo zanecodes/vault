@@ -11,7 +11,15 @@ import { isPresent } from '@ember/utils';
 
 const METHOD_PROPS = {
   common: [],
-  duo: ['username_format', 'secret_key', 'integration_key', 'api_hostname', 'push_info', 'use_passcode'],
+  duo: [
+    'username_format',
+    'secret_key',
+    'integration_key',
+    'api_hostname',
+    'push_info',
+    'use_passcode',
+    'insecure',
+  ],
   okta: ['username_format', 'mount_accessor', 'org_name', 'api_token', 'base_url', 'primary_email'],
   totp: ['issuer', 'period', 'key_size', 'qr_size', 'algorithm', 'digits', 'skew', 'max_validation_attempts'],
   pingid: [
@@ -116,6 +124,11 @@ export default class MfaMethod extends Model {
     subText: 'If this is turned on, the user is reminded to use the passcode upon MFA validation.',
   })
   use_passcode;
+  @attr('boolean', {
+    label: 'Insecure',
+    subText: 'If this is turned on, skips Duo server TLS certificate verification.',
+  })
+  insecure;
 
   // TOTP
   @attr('string', {
